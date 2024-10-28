@@ -5,3 +5,5 @@
 3. Подготовить метаданные для “сырых” бинарников с Камчатки.Есть пример сырых данных, файла метаданных и конвертированных данных.Также есть 2 различных конвентера.
    
 [Графики.pdf](https://github.com/user-attachments/files/17471036/default.pdf)
+
+https://drive.google.com/drive/folders/10VbMunybJfaTuRCZ-nEOn_B49nvAkrYn?usp=sharing 
