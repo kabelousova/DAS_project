@@ -25,7 +25,7 @@ for file_path in dir_path.iterdir():
     segments = [values[i:i + segment_size] for i in range(0, total_points, segment_size)]
 
     peaks_arg = [np.argmax(segment) for segment in segments]
-    segments = [s[max(0, peaks_arg[i] - 195): min(len(s), peaks_arg[i] + 195)] for i, s in enumerate(segments)]
+    segments = [s[max(0, peaks_arg[i] - 240): min(len(s), peaks_arg[i] + 240)] for i, s in enumerate(segments)]
 
     colors = ['b', 'g', 'r', 'm']
     y_offset = 0.05
