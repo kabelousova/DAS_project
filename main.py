@@ -12,12 +12,13 @@ for file_path in dir_path.iterdir():
 
     data = pd.read_csv(file_path, delimiter=';', header=None)
 
-    if data[1].dtype == type(str):
-        data[1] = data[1].str.replace(',', '.')
-        data[1] = pd.to_numeric(data[1], errors='coerce')
+    # LIS заменил на 0, т.к. будет только первый столбец
+    if data[0].dtype == type(str):
+        data[0] = data[0].str.replace(',', '.')
+        data[0] = pd.to_numeric(data[0], errors='coerce')
 
-    times = data[0].values
-    values = data[1].values
+    values = data[0].values
+    times = np.linspace(0.01, len(values), num=len(values), endpoint=True)
     # print(times, values)
 
     total_points = len(values)
@@ -26,15 +27,15 @@ for file_path in dir_path.iterdir():
     segment_size = 2000
     segments = [values[i:i + segment_size] for i in range(0, total_points - 192, segment_size)]
 
-    peaks_arg = [np.argmax(segment) for segment in segments]
-    segments = [s[max(0, peaks_arg[i] - 200): min(len(s), peaks_arg[i] + 10)] for i, s in enumerate(segments)]
-    for i, s in enumerate(segments):
-        print(f'Peak {i}: {peaks_arg[i]}')
-        print(max(0, peaks_arg[i] - 210), min(len(s), peaks_arg[i] + 30))
-        print(f'{i}: {len(s)}', end='\n')
+    # peaks_arg = [np.argmax(segment) for segment in segments]
+    # segments = [s[max(0, peaks_arg[i] - 200): min(len(s), peaks_arg[i] + 10)] for i, s in enumerate(segments)]
+    # for i, s in enumerate(segments):
+    #     print(f'Peak {i}: {peaks_arg[i]}')
+    #     print(max(0, peaks_arg[i] - 210), min(len(s), peaks_arg[i] + 30))
+    #     print(f'{i}: {len(s)}', end='\n')
 
     colors = ['b', 'g', 'r', 'm']
-    y_offset = 0.05
+    y_offset = 0.1
 
     plt.figure(figsize=(10, 8))
 
