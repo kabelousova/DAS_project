@@ -4,7 +4,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def find_SKO(array, len_window=212, mask=0.0435):
+def cross_cor(segm1, segm2, len_window=10):
+    n = np.shape(segm1)[1]
+    max_sum = 0
+    arr_sum = []
+    arg_max = -1
+    for i in range(1, n):
+        # print(i, n - i)
+        # print(segm1[0, 0:i], segm2.T[n - i: n, 0], sep="\n")
+        # print(np.shape(segm1))
+        # print(np.shape(segm2.T))
+        mysum = float((segm1[0, 0:i] * segm2.T[n - i: n, 0])[0, 0])
+        if mysum > max_sum:
+            max_sum = mysum
+            arg_max = i
+        # print("sum =", mysum)
+        arr_sum.append(mysum)
+    # print(8*"=")
+    for i in range(0, n):
+        # print(i, n - i)
+        # print(segm1[0, i:n], segm2.T[i: n, 0], sep="\n")
+        mysum = float((segm1[0, i:n] * segm2.T[i: n, 0])[0, 0])
+        if mysum > max_sum:
+            max_sum = mysum
+            arg_max = i
+        # print("sum =", mysum)
+        arr_sum.append(mysum)
+
+    return np.argmax(arr_sum), max_sum, arr_sum
+
+def find_SKO(array, len_window=225, mask=0.0435):
     """#+ np.std(array[i:len_window + i], axis=0))"""
     n = len(array)
     max_sko = 0
@@ -32,20 +61,25 @@ def find_SKO(array, len_window=212, mask=0.0435):
     return max_sko_index
 
 # print(find_SKO(np.array([1, 1,1,1,1,1,2])))
-sko_len = 225
+sko_len = 216
 plt_show = False
 a = 220
 b = 5
 dir_path = Path('./')
-col_with_dat_y = 1
+col_with_dat_y = 0
 num_refls = 4
 
 segment_size = 2000 # число 2000 кажется оптимальным
-num_choose_peaks = 0
-num_another = 0
+num_sum = 0
+num_cross = 0
+num_no_choose= 0
+files_not_converted = []
+total_count = 0
+
 for file_path in dir_path.iterdir():
     if not file_path.name.endswith('.csv') or file_path.is_dir():
         continue
+
 
     data = pd.read_csv(file_path, delimiter=';', header=None)
 
@@ -59,7 +93,8 @@ for file_path in dir_path.iterdir():
     # print(times, values)
 
     total_points = len(values)
-
+    total_count += 1
+    print(str(total_count).rjust(7), " ", end ='', sep='')
     segments = [values[i:i + segment_size] for i in range(0, total_points - 206, segment_size)] # Нарезка
 
     flag = False
@@ -71,14 +106,26 @@ for file_path in dir_path.iterdir():
     #     segments = [s[max(0, peaks_arg[i] - a): min(len(s), peaks_arg[i] + b)] for i, s in enumerate(segments)]
     #     flag_peaks = True
     #     num_choose_peaks += 1
-    std_arg = [find_SKO(segment) for segment in segments]
-    # print(std_arg, np.max(std_arg) - np.min(std_arg))
+    std_arg = [find_SKO(segment, sko_len) for segment in segments]
+    print("Finding by summing: ", std_arg, np.max(std_arg) - np.min(std_arg))
     if np.max(std_arg) - np.min(std_arg) <= 2:
         flag = True
         segments = [s[max(0, std_arg[i] - b): min(len(s), std_arg[i] + a)] for i, s in enumerate(segments)]
-        num_choose_peaks += 1
+        num_sum += 1
     else:
-        num_another += 1
+        cross_corr_arg = [cross_cor(np.matrix(segments[i - 1]), np.matrix(segments[i]))[0] for i in range(1, num_refls)]
+        # for i in range(1, num_refls):
+        #     print(cross_cor(np.matrix(segments[i - 1]), np.matrix(segments[i]))[0], end=" ")
+        # print()
+        cross_corr_arg.append(cross_corr_arg[0])
+        print(cross_corr_arg)
+        if np.max(cross_corr_arg) - np.min(cross_corr_arg) <= 0:
+            segments = [s[0: cross_corr_arg[i]] for i, s in enumerate(segments)]
+            num_cross += 1
+            flag = False
+        else:
+            num_no_choose += 1
+            flag = False
     # for i, s in enumerate(segments):
     #     print(f'Peak {i}: {peaks_arg[i]}')
     #     print(max(0, peaks_arg[i] - 210), min(len(s), peaks_arg[i] + 30))
@@ -128,8 +175,9 @@ for file_path in dir_path.iterdir():
         # plt.tight_layout()
         plt.draw()
 
-print("Количество файлов, где были выбраны пики:", num_choose_peaks)
-print("Количество файлов, где НЕ были выбраны пики:", num_another)
+print("Количество файлов, где выбрано с помощью сумм:", num_sum)
+print("Количество файлов, где выбрано кросс корреляцией:", num_cross)
+print("Количество файлов, где не выбрано:", num_no_choose)
 
 # print(np.linspace(0.01, segment_size, num=segment_size, endpoint=True))
 if plt_show:
